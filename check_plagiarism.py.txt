@@ -1,0 +1,76 @@
+import sys
+import re
+
+def read_file(filepath):
+    """读取文件内容"""
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        print(f"读取文件 {filepath} 失败: {e}")
+        sys.exit(1)
+
+def write_result(filepath, similarity):
+    """将结果写入文件，保留两位小数"""
+    try:
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(f"{similarity:.2f}")
+    except Exception as e:
+        print(f"写入文件 {filepath} 失败: {e}")
+        sys.exit(1)
+
+def preprocess_text(text):
+    """
+    文本预处理：去除标点符号、空格、换行符等，只保留中文字符和字母数字。
+    """
+    # 使用正则表达式，将非中文、非字母、非数字的字符替换为空
+    cleaned_text = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9]', '', text)
+    return cleaned_text
+    
+def calculate_similarity(text1, text2):
+    """
+    计算两段文本的Jaccard相似度。
+    公式：交集大小 / 并集大小
+    """
+    set1 = set(text1)
+    set2 = set(text2)
+    
+    # 计算交集
+    intersection = set1.intersection(set2)
+    # 计算并集
+    union = set1.union(set2)
+    
+    if len(union) == 0:
+        return 0.0
+        
+    similarity = len(intersection) / len(union)
+    return similarity
+
+def main():
+    # 检查命令行参数数量
+    # sys.argv[0] 是脚本名，所以总长度应该是 4
+    if len(sys.argv) != 4:
+        print("使用方法: python check_plagiarism.py <原文路径> <抄袭版路径> <输出结果路径>")
+        sys.exit(1)
+        
+    orig_path = sys.argv[1]
+    copy_path = sys.argv[2]
+    output_path = sys.argv[3]
+    
+    # 1. 读取文件
+    orig_text = read_file(orig_path)
+    copy_text = read_file(copy_path)
+    
+    # 2. 文本预处理
+    clean_orig = preprocess_text(orig_text)
+    clean_copy = preprocess_text(copy_text)
+    
+    # 3. 计算相似度
+    similarity = calculate_similarity(clean_orig, clean_copy)
+    
+    # 4. 输出结果
+    write_result(output_path, similarity)
+    print(f"查重完成，相似度: {similarity:.2f}，结果已保存至 {output_path}")
+
+if __name__ == "__main__":
+    main()
